@@ -12,26 +12,26 @@ export class HeartbeatMan extends libClass{
         this.wsm = wsm;
     }
 
-    public onerror(kind: 'ws_send'|'parity'): any {kind;} // set externally
+    public async onerror(kind: 'ws_send'|'parity'): Promise<any> {kind;} // set externally
 
-    public ack() {
+    public async ack() {
         this.logn("Last heartbeat ACKed");
         this.acked = true;
     }
-    public seq(seq: number) {
+    public async seq(seq: number) {
         this.logn(`Sequence set to ${seq}`);
         this.s = seq;
     }
-    public getSeq() {
+    public async getSeq() {
         return this.s;
     }
-    public beat() {
+    public async beat() {
         if (!this.acked) {
             this.logn("Previous heartbeat not acknowledged");
             this.onerror('parity');
             return;
         }
-        if (this.wsm.send({
+        if (await this.wsm.send({
             op: 1,
             d: this.s
         })) {
@@ -41,7 +41,7 @@ export class HeartbeatMan extends libClass{
             this.onerror('ws_send');
         }
     }
-    public start(interval: number) {
+    public async start(interval: number) {
         if (this.cycle_hook != 0) this.stop();
         this.cycle_hook = libSetInterval(
             () => this.beat(),
@@ -49,7 +49,7 @@ export class HeartbeatMan extends libClass{
         );
         this.logn(`Started with interval ${interval}`);
     }
-    public stop() {
+    public async stop() {
         libClearInterval(this.cycle_hook);
         this.cycle_hook = 0;
         this.logn("Stopped");

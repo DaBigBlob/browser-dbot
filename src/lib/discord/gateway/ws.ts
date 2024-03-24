@@ -7,7 +7,7 @@ export class WebSocketMan extends libClass {
     }
 
     private ws: libWebSocket | null = null;
-    private ws_new(url: string): boolean {
+    private async ws_new(url: string): Promise<boolean> {
         if (!isOnline()) {
             this.logn("Sysyem offline")
             return false;
@@ -21,7 +21,7 @@ export class WebSocketMan extends libClass {
             return false;
         }
     }
-    private ws_send(msg: string): boolean {
+    private async ws_send(msg: string): Promise<boolean> {
         if (!isOnline()) {
             this.logn("Sysyem offline")
             return false;
@@ -43,7 +43,7 @@ export class WebSocketMan extends libClass {
             return false;
         }
     }
-    private ws_close(code?: number) {
+    private async ws_close(code?: number) {
         if (!isOnline()) {
             this.logn("Sysyem offline")
             return false;
@@ -68,32 +68,43 @@ export class WebSocketMan extends libClass {
     }
 
 
-    public onclose(ev: CloseEvent): any {ev;}        // set externally
-    public onerror(ev: Event): any {ev;}             // set externally
-    public onmessage<T>(ev: MessageEvent<T>): any {ev;}    // set externally
+    public async onclose(ev: CloseEvent): Promise<any> {ev;}        // set externally
+    public async onerror(ev: Event): Promise<any> {ev;}             // set externally
+    public async onmessage<T>(ev: MessageEvent<T>): Promise<any> {ev;}    // set externally
     
-    public async set(url: string): Promise<void> {
+    public async set(url: string, retry: boolean = false): Promise<void> {
         this.logn(`Setting WS URL to ${url}`);
-        if (!this.ws_new(url) || !this.ws) {
-            this.logn("Retrying after 5 seconds...");
-            await delay(5000);
-            return await this.set(url);
+        if (!(await this.ws_new(url)) || !this.ws) {
+            if (retry) {
+                this.logn("Retrying after 5 seconds...");
+                await delay(5000);
+                await this.set(url);
+                return;
+            }
+            return;
         }
         this.ws.onopen = () => this.logn("WS connection established");
-        this.ws.onclose = (ev) => this.onclose(ev);
-        this.ws.onerror = (ev) => this.onerror(ev);
-        this.ws.onmessage = (ev) => this.onmessage(ev);
+        this.ws.onclose = async (ev) => await this.onclose(ev);
+        this.ws.onerror = async (ev) => await this.onerror(ev);
+        this.ws.onmessage = async (ev) => await this.onmessage(ev);
     }
-    public send(s: {
+    public async send(s: {
         op: GatewayOP,
         d?: object|number|string|null,
         s?: number|null,
         t?: string|null
-    }, retry: boolean = false): boolean {
-        const r = this.ws_send(JSON.stringify(s));
-        return (!r && retry) ? this.send(s, retry) : r;
+    }, retry: boolean = false): Promise<boolean> {
+        const r = await this.ws_send(JSON.stringify(s));
+        if (!r) {
+            if (retry) {
+                this.logn("Retrying after 5 seconds...");
+                await delay(5000);
+                return await this.send(s, retry);
+            }
+        }
+        return r;
     }
-    public close(code?: number) {
-        return this.ws_close(code);
+    public async close(code?: number): Promise<boolean> {
+        return await this.ws_close(code);
     }
 }
