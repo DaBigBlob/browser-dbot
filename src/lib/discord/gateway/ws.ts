@@ -9,7 +9,7 @@ export class WebSocketMan extends libClass {
     private ws: libWebSocket | null = null;
     private ws_new(url: string): boolean {
         if (!isOnline()) {
-            this.logn("Offline...")
+            this.logn("Sysyem offline")
             return false;
         }
         try {
@@ -22,8 +22,16 @@ export class WebSocketMan extends libClass {
         }
     }
     private ws_send(msg: string): boolean {
-        if (!isOnline() || !this.ws || this.ws.readyState !== this.ws.OPEN) {
-            this.logn("Offline or internal error...")
+        if (!isOnline()) {
+            this.logn("Sysyem offline")
+            return false;
+        }
+        if (!this.ws) {
+            this.logn("WS points to null");
+            return false
+        }
+        if (this.ws.readyState !== this.ws.OPEN) {
+            this.logn("WS is not open");
             return false;
         }
         try {
@@ -36,14 +44,21 @@ export class WebSocketMan extends libClass {
         }
     }
     private ws_close(code?: number) {
-        if (!isOnline() || !this.ws) {
-            this.logn("Offline or internal error...")
+        if (!isOnline()) {
+            this.logn("Sysyem offline")
             return false;
+        }
+        if (!this.ws) {
+            this.logn("WS points to null");
+            return false
         }
         if (
             this.ws.readyState === this.ws.CLOSED ||
             this.ws.readyState === this.ws.CLOSING
-        ) return true;
+        ) {
+            this.logn("WS has CLOSED or CLOSING");
+            return true;
+        }
         try {
             this.ws.close(code);
             return true;
@@ -58,6 +73,7 @@ export class WebSocketMan extends libClass {
     public onmessage<T>(ev: MessageEvent<T>): any {ev;}    // set externally
     
     public async set(url: string): Promise<void> {
+        this.logn(`Setting WS URL to ${url}`);
         if (!this.ws_new(url) || !this.ws) {
             this.logn("Retrying after 5 seconds...");
             await delay(5000);

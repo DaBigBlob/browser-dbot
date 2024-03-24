@@ -45,7 +45,7 @@ export class HeartbeatMan extends libClass{
         if (this.cycle_hook != 0) this.stop();
         this.cycle_hook = libSetInterval(
             () => this.beat(),
-            interval * libMath.random()
+            interval * 0.05//libMath.random() // TODO
         );
         this.logn(`Started with interval ${interval}`);
     }
