@@ -43,7 +43,7 @@ export class GatewayMan extends libClass {
     }
 
     private async reconnect() {
-        const rd = this.ssn.reconnectData();
+        const rd = this.ssn.data();
         if (!rd) {
             await this.rebegin();
             return;
@@ -106,6 +106,8 @@ export class GatewayMan extends libClass {
                     switch(res.t) {
                         case('READY'): {
                             this.ssn.populate((res as GWReadyDispatch).d);
+                            const d = this.ssn.data();
+                            this.logn(`Logged in as ${d!.user.username}#${d!.user.discriminator} (${d!.user.id})`);
                             break;
                         }
                         case('GUILD_CREATE'): {

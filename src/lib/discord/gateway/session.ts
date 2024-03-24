@@ -7,7 +7,7 @@ export class SessionMan extends libClass {
     }
     private session: GatewayReadyEventD|null = null;
 
-    public onerror(kind: 'access_to_no_guild'|'access_to_no_reconnect_data'|'guild_mismatch'): any {kind;} // set externally
+    public onerror(kind: 'access_to_no_guild'|'access_to_no_data'|'guild_mismatch'): any {kind;} // set externally
 
     public dispose() {
         this.logn("Disposing session data");
@@ -32,17 +32,11 @@ export class SessionMan extends libClass {
             this.onerror('guild_mismatch');
         }
     }
-    public reconnectData(): {
-        resume_gateway_url: string,
-        session_id: string
-    }|null {
+    public data(): GatewayReadyEventD|null {
         if (!this.session) {
-            this.onerror('access_to_no_reconnect_data');
+            this.onerror('access_to_no_data');
             return null;
         }
-        return {
-            resume_gateway_url: this.session.resume_gateway_url,
-            session_id: this.session.session_id
-        };
+        return this.session;
     }
 }
