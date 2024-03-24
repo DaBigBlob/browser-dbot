@@ -1,0 +1,22 @@
+{
+  "name": "browser-dbot",
+  "version": "0.1.0",
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.1.4"
+  },
+  "private": true,
+  "scripts": {
+    "vite:dev": "vite dev",
+    "build": "vite build",
+    "build:clean": "npm run distclean && vite build",
+    "distclean": "rm -rf ./dist",
+    "preview": "vite preview",
+    "dev": "wrangler pages dev --compatibility-date=2023-12-18 -- npm run vite:dev",
+    "deploy": "npm run build:clean && wrangler pages deploy ./dist --env=production --branch=production"
+  },
+  "type": "module",
+  "dependencies": {
+    "discord-api-types": "^0.37.76"
+  }
+}
