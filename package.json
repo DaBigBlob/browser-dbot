@@ -15,8 +15,5 @@
     "dev": "wrangler pages dev --compatibility-date=2023-12-18 -- npm run vite:dev",
     "deploy": "npm run build:clean && wrangler pages deploy ./dist --env=production --branch=production"
   },
-  "type": "module",
-  "dependencies": {
-    "discord-api-types": "^0.37.76"
-  }
+  "type": "module"
 }
