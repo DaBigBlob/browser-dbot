@@ -9,7 +9,7 @@ export class WebSocketMan extends libClass {
     private ws: libWebSocket | null = null;
     private async ws_new(url: string): Promise<boolean> {
         if (!isOnline()) {
-            this.logn("Sysyem offline")
+            this.logn("System offline")
             return false;
         }
         try {
@@ -23,7 +23,7 @@ export class WebSocketMan extends libClass {
     }
     private async ws_send(msg: string): Promise<boolean> {
         if (!isOnline()) {
-            this.logn("Sysyem offline")
+            this.logn("System offline")
             return false;
         }
         if (!this.ws) {
@@ -45,7 +45,7 @@ export class WebSocketMan extends libClass {
     }
     private async ws_close(code?: number) {
         if (!isOnline()) {
-            this.logn("Sysyem offline")
+            this.logn("System offline")
             return false;
         }
         if (!this.ws) {
