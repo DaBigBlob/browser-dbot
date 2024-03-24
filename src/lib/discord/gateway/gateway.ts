@@ -44,10 +44,7 @@ export class GatewayMan extends libClass {
 
     private async reconnect() {
         const rd = this.ssn.data();
-        if (!rd) {
-            await this.rebegin();
-            return;
-        }
+        if (!rd) return await this.rebegin();
         await this.wsm.set(`${rd.resume_gateway_url}/?v=10&encoding=json`);
         if (!this.wsm.send({
             op: GatewayOP.Reconnect,
@@ -56,7 +53,7 @@ export class GatewayMan extends libClass {
 				seq: this.hbm.getSeq(),
 				session_id: rd.session_id
             }
-        })) await this.rebegin();
+        })) return await this.rebegin();
 
     }
 
@@ -89,15 +86,15 @@ export class GatewayMan extends libClass {
                 case(GatewayOP.InvalidSession): {
                     this.logn("Current session invalidated by Discord");
                     if (res.d) {
-                        await this.reconnect();
+                        return await this.reconnect();
                     } else {
-                        return await this.begin();
+                        return await this.rebegin();
                     };
                     break;
                 }
                 case(GatewayOP.Reconnect): {
                     this.logn("Reconnection requested by Discord");
-                        await this.reconnect();
+                        return await this.reconnect();
                     break;
                 }
                 case(GatewayOP.Dispatch): {
@@ -124,7 +121,7 @@ export class GatewayMan extends libClass {
             if (ev.code < 4010 && ev.code != 4004) {
                 await this.reconnect();
             } else {
-                return await this.begin();
+                return await this.rebegin();
             }
         }
     }
