@@ -25,3 +25,4 @@ export function isOnline() {
     return navigator.onLine;
 }
 export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+export const libFetch = window.fetch;

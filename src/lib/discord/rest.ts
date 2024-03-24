@@ -1,4 +1,4 @@
-import { libClass, libLog } from "../lib";
+import { libClass, libFetch, libJSON, libLog } from "../lib";
 import { RESTGetAPIGatewayResult } from "./types";
 
 export class RESTMan extends libClass {
@@ -21,8 +21,8 @@ export class RESTMan extends libClass {
             extra_headers?: object
         }
     ) {
-        return await window.fetch(`${this.DISCORD_API_ENDPOINT}${fetch_data.route}`, {
-            body: JSON.stringify(fetch_data.json_body),
+        return await libFetch(`${this.DISCORD_API_ENDPOINT}${fetch_data.route}`, {
+            body: libJSON.stringify(fetch_data.json_body),
             method: fetch_data.method,
             headers: {
             'Content-Type': `application/json`,
