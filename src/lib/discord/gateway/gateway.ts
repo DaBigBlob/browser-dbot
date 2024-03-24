@@ -19,8 +19,8 @@ export class GatewayMan extends libClass {
         this.ssn = new SessionMan(this.log);
     }
 
-    private identify() {
-        this.wsm.send({
+    private async identify() {
+        await this.wsm.send({
             op: GatewayOP.Identify,
             d: {
                 token: this.token,
@@ -43,10 +43,10 @@ export class GatewayMan extends libClass {
     }
 
     private async reconnect() {
-        const rd = this.ssn.data();
+        const rd = await this.ssn.data();
         if (!rd) return await this.rebegin();
         await this.wsm.set(`${rd.resume_gateway_url}/?v=10&encoding=json`);
-        if (!this.wsm.send({
+        if (!await this.wsm.send({
             op: GatewayOP.Reconnect,
             d: {
                 token: this.token,
@@ -58,7 +58,7 @@ export class GatewayMan extends libClass {
     }
 
     public async rebegin() {
-        this.end();
+        await this.end();
         await this.begin();
     }
     public async begin() {
@@ -69,18 +69,18 @@ export class GatewayMan extends libClass {
             switch(res.op) {
                 case(GatewayOP.Hello): {
                     this.logn("Hello from Discord");
-                    this.hbm.start(res.d.heartbeat_interval);
-                    this.identify();
+                    await this.hbm.start(res.d.heartbeat_interval);
+                    await this.identify();
                     break;
                 }
                 case(GatewayOP.HeartbeatAck): {
                     this.logn("Heart ACK received");
-                    this.hbm.ack();
+                    await this.hbm.ack();
                     break;
                 }
                 case(GatewayOP.Heartbeat): {
                     this.logn("Hearbeat reqest received");
-                    this.hbm.beat();
+                    await this.hbm.beat();
                     break;
                 }
                 case(GatewayOP.InvalidSession): {
@@ -90,25 +90,23 @@ export class GatewayMan extends libClass {
                     } else {
                         return await this.rebegin();
                     };
-                    break;
                 }
                 case(GatewayOP.Reconnect): {
                     this.logn("Reconnection requested by Discord");
-                        return await this.reconnect();
-                    break;
+                    return await this.reconnect();
                 }
                 case(GatewayOP.Dispatch): {
                     this.logn("Dispatch event reveived");
-                    this.hbm.seq(res.s);
+                    await this.hbm.seq(res.s);
                     switch(res.t) {
                         case('READY'): {
-                            this.ssn.populate((res as GWReadyDispatch).d);
-                            const d = this.ssn.data();
+                            await this.ssn.populate((res as GWReadyDispatch).d);
+                            const d = await this.ssn.data();
                             this.logn(`Logged in as ${d!.user.username}#${d!.user.discriminator} (${d!.user.id})`);
                             break;
                         }
                         case('GUILD_CREATE'): {
-                            this.ssn.guildCreate((res as GWGuildCreateDispatch).d);
+                            await this.ssn.guildCreate((res as GWGuildCreateDispatch).d);
                             break;
                         }
                         default: this.logn(`Unhandled event of type ${res.t}`);
@@ -119,16 +117,16 @@ export class GatewayMan extends libClass {
         }
         this.wsm.onclose = async (ev) => {
             if (ev.code < 4010 && ev.code != 4004) {
-                await this.reconnect();
+                return await this.reconnect();
             } else {
                 return await this.rebegin();
             }
         }
     }
 
-    public end() {
-        this.wsm.close();
-        this.hbm.stop();
-        this.ssn.dispose();
+    public async end() {
+        await this.wsm.close();
+        await this.hbm.stop();
+        await this.ssn.dispose();
     }
 }

@@ -94,6 +94,7 @@ export class WebSocketMan extends libClass {
         s?: number|null,
         t?: string|null
     }, retry: boolean = false): Promise<boolean> {
+        this.logn("Sending WS payload");
         const r = await this.ws_send(JSON.stringify(s));
         if (!r) {
             if (retry) {

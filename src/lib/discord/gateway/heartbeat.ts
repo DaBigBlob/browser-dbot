@@ -28,7 +28,7 @@ export class HeartbeatMan extends libClass{
     public async beat() {
         if (!this.acked) {
             this.logn("Previous heartbeat not acknowledged");
-            this.onerror('parity');
+            await this.onerror('parity');
             return;
         }
         if (await this.wsm.send({
@@ -44,7 +44,7 @@ export class HeartbeatMan extends libClass{
     public async start(interval: number) {
         if (this.cycle_hook != 0) this.stop();
         this.cycle_hook = libSetInterval(
-            () => this.beat(),
+            async () => await this.beat(),
             interval * 0.05//libMath.random() // TODO
         );
         this.logn(`Started with interval ${interval}`);

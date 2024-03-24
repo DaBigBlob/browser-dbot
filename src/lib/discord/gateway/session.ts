@@ -7,20 +7,20 @@ export class SessionMan extends libClass {
     }
     private session: GatewayReadyEventD|null = null;
 
-    public onerror(kind: 'access_to_no_guild'|'access_to_no_data'|'guild_mismatch'): any {kind;} // set externally
+    public async onerror(kind: 'access_to_no_guild'|'access_to_no_data'|'guild_mismatch'): Promise<any> {kind;} // set externally
 
-    public dispose() {
+    public async dispose() {
         this.logn("Disposing session data");
         this.session = null;
     }
-    public populate(data: GatewayReadyEventD) {
-        if (!!this.session) this.dispose();
+    public async populate(data: GatewayReadyEventD) {
+        if (!!this.session) await this.dispose();
         this.logn("Populating session data");
         this.session = data;
     }
-    public guildCreate(guilds: APIGuild) {
+    public async guildCreate(guilds: APIGuild) {
         if (!this.session) {
-            this.onerror('access_to_no_guild');
+            await this.onerror('access_to_no_guild');
             return;
         }
         const idx = this.session!.guilds.findIndex(g => (g.id === guilds.id));
@@ -29,12 +29,12 @@ export class SessionMan extends libClass {
             this.logn("Guild info added successfully");
         } else {
             this.logn(`Could not find guild with ID ${guilds.id} to replace`);
-            this.onerror('guild_mismatch');
+            await this.onerror('guild_mismatch');
         }
     }
-    public data(): GatewayReadyEventD|null {
+    public async data(): Promise<GatewayReadyEventD | null> {
         if (!this.session) {
-            this.onerror('access_to_no_data');
+            await this.onerror('access_to_no_data');
             return null;
         }
         return this.session;
