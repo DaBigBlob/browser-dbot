@@ -1,6 +1,6 @@
 import { libClass, libJSON } from "../../lib";
 import { Terminal } from "../../terminal";
-import { getGatewayWSURL } from "../rest";
+import { RESTMan } from "../rest";
 import { GatewayOP, GWGuildCreateDispatch, GWReadyDispatch, GWReceivePayload } from "../types";
 import { HeartbeatMan } from "./heartbeat";
 import { SessionMan } from "./session";
@@ -11,12 +11,14 @@ export class GatewayMan extends libClass {
     private wsm: WebSocketMan;
     private hbm: HeartbeatMan;
     private ssn: SessionMan;
+    private rst: RESTMan;
     constructor(term: Terminal, token: string) {
         super("GATEWAY", (m: string) => {term.add(m);});
         this.token = token;
         this.wsm = new WebSocketMan(this.log);
         this.hbm = new HeartbeatMan(this.log, this.wsm);
         this.ssn = new SessionMan(this.log);
+        this.rst = new RESTMan(this.log);
     }
 
     private async identify() {
@@ -62,7 +64,7 @@ export class GatewayMan extends libClass {
         await this.begin();
     }
     public async begin() {
-        await this.wsm.set(`${(await getGatewayWSURL()).url}/?v=10&encoding=json`);
+        await this.wsm.set(`${(await this.rst.getGatewayWSURL()).url}/?v=10&encoding=json`);
 
         this.wsm.onmessage<string> = async (ev) => {
             const res = libJSON.parse(ev.data) as GWReceivePayload;
