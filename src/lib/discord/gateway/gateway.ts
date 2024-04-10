@@ -1,7 +1,7 @@
-import { libClass, libJSON } from "../../lib";
+import { GatewayOpcodes, GatewayReceivePayload } from "discord-api-types/v10";
+import { delay, libClass, libJSON } from "../../lib";
 import { Terminal } from "../../terminal";
 import { RESTMan } from "../rest";
-import { GatewayOP, GWGuildCreateDispatch, GWReadyDispatch, GWReceivePayload } from "../types";
 import { HeartbeatMan } from "./heartbeat";
 import { SessionMan } from "./session";
 import { WebSocketMan } from "./ws";
@@ -23,7 +23,7 @@ export class GatewayMan extends libClass {
 
     private async identify() {
         await this.wsm.send({
-            op: GatewayOP.Identify,
+            op: GatewayOpcodes.Identify,
             d: {
                 token: this.token,
                 properties: {
@@ -49,7 +49,7 @@ export class GatewayMan extends libClass {
         if (!rd) return await this.rebegin();
         await this.wsm.set(`${rd.resume_gateway_url}/?v=10&encoding=json`);
         if (!await this.wsm.send({
-            op: GatewayOP.Reconnect,
+            op: GatewayOpcodes.Reconnect,
             d: {
                 token: this.token,
 				seq: this.hbm.getSeq(),
@@ -64,28 +64,35 @@ export class GatewayMan extends libClass {
         await this.begin();
     }
     public async begin() {
-        await this.wsm.set(`${(await this.rst.getGatewayWSURL()).url}/?v=10&encoding=json`);
+        const GWurl = await this.rst.getGatewayWSURL()
+        if (!GWurl) {
+            this.logn("Retrying after 5 seconds");
+            await delay(5000);
+            await this.rebegin();
+            return;
+        }
+        await this.wsm.set(`${GWurl.url}/?v=10&encoding=json`);
 
         this.wsm.onmessage<string> = async (ev) => {
-            const res = libJSON.parse(ev.data) as GWReceivePayload;
+            const res = libJSON.parse(ev.data) as GatewayReceivePayload;
             switch(res.op) {
-                case(GatewayOP.Hello): {
+                case(GatewayOpcodes.Hello): {
                     this.logn("Hello from Discord");
                     await this.hbm.start(res.d.heartbeat_interval);
                     await this.identify();
                     break;
                 }
-                case(GatewayOP.HeartbeatAck): {
+                case(GatewayOpcodes.HeartbeatAck): {
                     this.logn("Heart ACK received");
                     await this.hbm.ack();
                     break;
                 }
-                case(GatewayOP.Heartbeat): {
+                case(GatewayOpcodes.Heartbeat): {
                     this.logn("Hearbeat reqest received");
                     await this.hbm.beat();
                     break;
                 }
-                case(GatewayOP.InvalidSession): {
+                case(GatewayOpcodes.InvalidSession): {
                     this.logn("Current session invalidated by Discord");
                     if (res.d) {
                         return await this.reconnect();
@@ -93,22 +100,22 @@ export class GatewayMan extends libClass {
                         return await this.rebegin();
                     };
                 }
-                case(GatewayOP.Reconnect): {
+                case(GatewayOpcodes.Reconnect): {
                     this.logn("Reconnection requested by Discord");
                     return await this.reconnect();
                 }
-                case(GatewayOP.Dispatch): {
+                case(GatewayOpcodes.Dispatch): {
                     this.logn("Dispatch event reveived");
                     await this.hbm.seq(res.s);
                     switch(res.t) {
                         case('READY'): {
-                            await this.ssn.populate((res as GWReadyDispatch).d);
+                            await this.ssn.populate(res.d);
                             const d = await this.ssn.data();
                             this.logn(`Logged in as ${d!.user.username}#${d!.user.discriminator} (${d!.user.id})`);
                             break;
                         }
                         case('GUILD_CREATE'): {
-                            await this.ssn.guildCreate((res as GWGuildCreateDispatch).d);
+                            await this.ssn.guildCreate(res.d);
                             break;
                         }
                         default: this.logn(`Unhandled event of type ${res.t}`);

@@ -2,6 +2,7 @@
   "name": "browser-dbot",
   "version": "0.1.0",
   "devDependencies": {
+    "discord-api-types": "^0.37.79",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"
   },

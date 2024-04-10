@@ -1,4 +1,4 @@
-import { libClass, libClearInterval, libLog, libMath, libSetInterval } from "../../lib";
+import { libClass, libClearInterval, libLog, libSetInterval } from "../../lib";
 import { WebSocketMan } from "./ws";
 
 export class HeartbeatMan extends libClass{

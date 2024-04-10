@@ -1,5 +1,5 @@
 import { delay, isOnline, libClass, libLog, libWebSocket } from "../../lib";
-import { GatewayOP } from "../types";
+import { GatewayOpcodes } from 'discord-api-types/v10';
 
 export class WebSocketMan extends libClass {
     constructor(log: libLog) {
@@ -89,7 +89,7 @@ export class WebSocketMan extends libClass {
         this.ws.onmessage = async (ev) => await this.onmessage(ev);
     }
     public async send(s: {
-        op: GatewayOP,
+        op: GatewayOpcodes,
         d?: object|number|string|null,
         s?: number|null,
         t?: string|null

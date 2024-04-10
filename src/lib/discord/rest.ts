@@ -1,5 +1,5 @@
-import { libClass, libFetch, libJSON, libLog } from "../lib";
-import { RESTGetAPIGatewayResult } from "./types";
+import { isOnline, libClass, libFetch, libJSON, libLog } from "../lib";
+import { RESTGetAPIGatewayResult } from 'discord-api-types/v10';
 
 export class RESTMan extends libClass {
     constructor(log: libLog) {
@@ -7,6 +7,8 @@ export class RESTMan extends libClass {
     }
 
     public DISCORD_API_ENDPOINT = "https://discord.com/api/v10";
+
+    public async onerror(kind: 'offline'): Promise<any> {kind;} // set externally
 
     public discordAuthHeader(token: string) {
         return {
@@ -21,6 +23,11 @@ export class RESTMan extends libClass {
             extra_headers?: object
         }
     ) {
+        if (!isOnline()) {
+            this.logn("System offline")
+            await this.onerror('offline');
+            return null;
+        }
         return await libFetch(`${this.DISCORD_API_ENDPOINT}${fetch_data.route}`, {
             body: libJSON.stringify(fetch_data.json_body),
             method: fetch_data.method,
@@ -31,9 +38,11 @@ export class RESTMan extends libClass {
         });
     }
     public async getGatewayWSURL() {
-        return await (await this.discordFetch({
+        const r = await this.discordFetch({
             method: 'GET',
             route: "/gateway"
-        })).json() as RESTGetAPIGatewayResult;
+        });
+        if (!r) return null;
+        return await r.json() as RESTGetAPIGatewayResult;
     }
 }

@@ -1,11 +1,11 @@
+import { APIGuild, GatewayReadyDispatchData } from "discord-api-types/v10";
 import { libClass, libLog } from "../../lib";
-import { APIGuild, GatewayReadyEventD } from "../types";
 
 export class SessionMan extends libClass {
     constructor(log: libLog) {
         super("SESSION", log);
     }
-    private session: GatewayReadyEventD|null = null;
+    private session: GatewayReadyDispatchData|null = null;
 
     public async onerror(kind: 'access_to_no_guild'|'access_to_no_data'|'guild_mismatch'): Promise<any> {kind;} // set externally
 
@@ -13,26 +13,27 @@ export class SessionMan extends libClass {
         this.logn("Disposing session data");
         this.session = null;
     }
-    public async populate(data: GatewayReadyEventD) {
+    public async populate(data: GatewayReadyDispatchData) {
         if (!!this.session) await this.dispose();
         this.logn("Populating session data");
         this.session = data;
     }
-    public async guildCreate(guilds: APIGuild) {
+    public async guildCreate(guild: APIGuild) {
         if (!this.session) {
             await this.onerror('access_to_no_guild');
             return;
         }
-        const idx = this.session!.guilds.findIndex(g => (g.id === guilds.id));
+        const idx = this.session!.guilds.findIndex(g => (g.id === guild.id));
         if (idx !== -1) {
-            this.session!.guilds[idx] = guilds;
+            const _guild = {...guild, unavailable: false} as APIGuild & { unavailable: boolean };
+            this.session!.guilds[idx] = _guild;
             this.logn("Guild info added successfully");
         } else {
-            this.logn(`Could not find guild with ID ${guilds.id} to replace`);
+            this.logn(`Could not find guild with ID ${guild.id} to replace`);
             await this.onerror('guild_mismatch');
         }
     }
-    public async data(): Promise<GatewayReadyEventD | null> {
+    public async data(): Promise<GatewayReadyDispatchData | null> {
         if (!this.session) {
             await this.onerror('access_to_no_data');
             return null;
