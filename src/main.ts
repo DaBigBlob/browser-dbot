@@ -1,6 +1,6 @@
-import { GatewayMan } from "./lib/discord/gateway/gateway.ts";
+import { GatewayMan } from "./lib/discord/gateway/gateway";
 import { Terminal, screen_init } from "./lib/terminal";
-import { getToken } from "./lib/token.ts";
+import { getToken } from "./lib/token";
 
 (async () => {
     const screen = screen_init();
